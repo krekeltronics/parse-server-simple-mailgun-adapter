@@ -6,9 +6,11 @@ var SimpleMailgunAdapter = mailgunOptions => {
   if (!mailgunOptions || !mailgunOptions.fromAddress) {
     throw 'SimpleMailgunAdapter requires a fromAddress';
   }
+  this.fromAddress = mailgunOptions.fromAddress
+  this.mime = mailgunOptions.mime || false
 
   if (typeof mailgunOptions.mailgun !== 'undefined') {
-   mailgun = mailgunOptions.mailgun;
+    mailgun = mailgunOptions.mailgun;
   } else {
     if (!mailgunOptions || !mailgunOptions.apiKey || !mailgunOptions.domain) {
       throw 'SimpleMailgunAdapter requires an API Key and domain.';
@@ -17,7 +19,7 @@ var SimpleMailgunAdapter = mailgunOptions => {
   }
 
   var sendMail = mail => {
-    if (mail.mime === true) {
+    if (this.mime === true) {
       return sendMime(mail);
     } else {
       return sendPlain(mail);
@@ -26,7 +28,7 @@ var SimpleMailgunAdapter = mailgunOptions => {
 
   var sendPlain = mail => {
     var data = {
-      from: mailgunOptions.fromAddress,
+      from: this.fromAddress,
       to: mail.to,
       subject: mail.subject,
       text: mail.text,
@@ -77,6 +79,14 @@ var SimpleMailgunAdapter = mailgunOptions => {
 
   var exports = {
     sendMail: sendMail
+  }
+
+  if (mailgunOptions.sendVerificationEmail) {
+    exports.sendVerificationEmail = mailgunOptions.sendVerificationEmail
+  }
+
+  if (mailgunOptions.sendPasswordResetEmail) {
+    exports.sendPasswordResetEmail = mailgunOptions.sendPasswordResetEmail
   }
 
   return Object.freeze(exports);
