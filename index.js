@@ -6,8 +6,6 @@ var SimpleMailgunAdapter = mailgunOptions => {
   if (!mailgunOptions || !mailgunOptions.fromAddress) {
     throw 'SimpleMailgunAdapter requires a fromAddress';
   }
-  this.fromAddress = mailgunOptions.fromAddress
-  this.mime = mailgunOptions.mime || false
 
   if (typeof mailgunOptions.mailgun !== 'undefined') {
     mailgun = mailgunOptions.mailgun;
@@ -19,7 +17,7 @@ var SimpleMailgunAdapter = mailgunOptions => {
   }
 
   var sendMail = mail => {
-    if (this.mime === true) {
+    if (mailgunOptions.mime === true) {
       return sendMime(mail);
     } else {
       return sendPlain(mail);
@@ -28,7 +26,7 @@ var SimpleMailgunAdapter = mailgunOptions => {
 
   var sendPlain = mail => {
     var data = {
-      from: this.fromAddress,
+      from: mailgunOptions.fromAddress,
       to: mail.to,
       subject: mail.subject,
       text: mail.text,
@@ -79,7 +77,12 @@ var SimpleMailgunAdapter = mailgunOptions => {
 
   var exports = {
     sendMail: sendMail,
-    mime: this.mime
+
+    // The address from which to send emails
+    fromAddress: mailgunOptions.fromAddress,
+
+    // Send mode for this adapter. If true, send messages in MIME format
+    mime: mailgunOptions.mime || false
   }
 
   if (mailgunOptions.sendVerificationEmail) {
