@@ -78,18 +78,24 @@ var SimpleMailgunAdapter = mailgunOptions => {
   }
 
   var exports = {
-    sendMail: sendMail
+    sendMail: sendMail,
+    mime: this.mime
   }
 
   if (mailgunOptions.sendVerificationEmail) {
+    // TODO: Add templates for sendVerificationEmail
     exports.sendVerificationEmail = mailgunOptions.sendVerificationEmail
   }
 
   if (mailgunOptions.sendPasswordResetEmail) {
+    if (!mailgunOptions.passwordResetTemplates || !mailgunOptions.passwordResetTemplates.text || !mailgunOptions.passwordResetTemplates.html) {
+      throw new Error('SimpleMailgunAdapter requires passwordResetTemplates for text and html if you supply sendPasswordResetEmail')
+    }
+    exports.passwordResetTemplates = mailgunOptions.passwordResetTemplates
     exports.sendPasswordResetEmail = mailgunOptions.sendPasswordResetEmail
   }
 
-  return Object.freeze(exports);
+  return Object.freeze(exports)
 }
 
 module.exports = SimpleMailgunAdapter
