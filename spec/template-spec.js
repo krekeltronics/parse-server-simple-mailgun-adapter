@@ -11,22 +11,24 @@ var encodeQueryParams = (params) => {
   }).join('&')
 }
 
+var regExpForHtmlContent = (html) => {
+  return new RegExp(html.replace('/', '\/'))
+}
+
 describe('Mailgun adapter', () => {
   var mailOptions
-  var html
 
-  beforeEach(() => {
-    mailOptions = {
-      from: 'noreply@example.com',
-      to: 'test@example.com',
-      subject: 'my test',
-      text: 'Hello,\nThanks for your interest!'
-    }
-    html = '<html><head></head><body><p>' + mailOptions.text + '</p></body></html>'
-  })
+  describe('when sending a simple message', () => {
+    beforeEach(() => {
+      mailOptions = {
+        from: 'noreply@example.com',
+        to: 'test@example.com',
+        subject: 'my test',
+        text: 'Hello,\nThanks for your interest!'
+      }
+    })
 
-  describe('sending plain text', () => {
-    it('sends plain text message', (done) => {
+    it('sends plain text', (done) => {
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
         .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages', encodeQueryParams(mailOptions))
         .reply(200, {id: 'send-text-message', message: 'Queued. Thank you.'})
@@ -43,16 +45,15 @@ describe('Mailgun adapter', () => {
         done()
       })
     })
-  })
 
-  describe('sending MIME', () => {
-    it('sends MIME message', (done) => {
+    it('sends MIME', (done) => {
+      mailOptions.mime = true
+      mailOptions.html = '<html><head></head><body><p>' + mailOptions.text + '</p></body></html>'
+
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
-        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages.mime', new RegExp(html.replace('/', '\/')))
+        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages.mime', regExpForHtmlContent(mailOptions.html))
         .reply(200, {id: 'send-mime-message', message: 'Queued. Thank you.'})
 
-      mailOptions.mime = true
-      mailOptions.html = html
       mailgunAdapter({
         apiKey: process.env.MAILGUN_API_KEY,
         domain: process.env.MAILGUN_API_DOMAIN,
