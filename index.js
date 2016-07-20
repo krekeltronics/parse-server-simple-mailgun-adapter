@@ -48,7 +48,7 @@ var SimpleMailgunAdapter = mailgunOptions => {
       from: mailgunOptions.fromAddress,
       to: toAddress,
       subject: mail.subject,
-      body: mail.text,
+      text: mail.text,
       html: mail.html
     }
 
