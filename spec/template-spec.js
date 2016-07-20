@@ -76,15 +76,15 @@ describe('Mailgun adapter', () => {
 
     beforeEach(() => {
       passwordResetTemplates = {
-        text: 'Hi,\n\n' +
+        text: ejs.compile('Hi,\n\n' +
           'You requested to reset your password for <%= appName %>.\n\n' +
-          'Click here to reset it:\n<%= link %>',
-        html: '<html><head></head><body>\n' +
+          'Click here to reset it:\n<%= link %>'),
+        html: ejs.compile('<html><head></head><body>\n' +
           '<p>Hi,</p>\n' +
           '<p>You requested to reset your password for <%= appName %>.</p>\n' +
           '<p>Click here to reset it:<br />\n' +
           '<a href="<%= link %>"><%= link %></a></p>\n' +
-          '</body></html>'
+          '</body></html>')
       }
 
       passwordResetOptions = {
@@ -97,15 +97,16 @@ describe('Mailgun adapter', () => {
       }
 
       sendPasswordResetEmail = function (options) {
+        var templates = this.passwordResetTemplates
         var data = {
           from: this.fromAddress,
           to: options.user.get('email'),
           subject: 'Password Reset for ' + options.appName,
-          text: ejs.render(this.passwordResetTemplates.text, options)
+          text: templates.text(options)
         }
 
         if (this.mime) {
-          data.html = ejs.render(this.passwordResetTemplates.html, options)
+          data.html = templates.html(options)
         }
 
         return this.sendMail(data)
