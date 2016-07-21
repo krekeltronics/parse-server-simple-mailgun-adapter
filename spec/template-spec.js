@@ -5,6 +5,9 @@ var ejs = require('ejs')
 
 nock.disableNetConnect()
 
+var mailgunAPIKey = process.env.MAILGUN_API_KEY || 'my-api-key'
+var mailgunAPIDomain = process.env.MAILGUN_API_DOMAIN || 'my-api-domain'
+
 var encodeQueryParams = (params) => {
   return Object.keys(params).map(key => {
     return encodeURIComponent(key) + '=' + encodeURIComponent(params[key])
@@ -30,12 +33,12 @@ describe('Mailgun adapter', () => {
 
     it('sends plain text', (done) => {
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
-        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages', encodeQueryParams(mailOptions))
+        .post('/v3/' + mailgunAPIDomain + '/messages', encodeQueryParams(mailOptions))
         .reply(200, {id: 'send-text-message', message: 'Queued. Thank you.'})
 
       mailgunAdapter({
-        apiKey: process.env.MAILGUN_API_KEY,
-        domain: process.env.MAILGUN_API_DOMAIN,
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
         fromAddress: 'noreply@example.com'
       }).sendMail(mailOptions).then((response) => {
         expect(response.id).toEqual('send-text-message')
@@ -51,12 +54,12 @@ describe('Mailgun adapter', () => {
       mailOptions.html = '<html><head></head><body><p>' + mailOptions.text + '</p></body></html>'
 
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
-        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages.mime', regExpForHtmlContent(mailOptions.html))
+        .post('/v3/' + mailgunAPIDomain + '/messages.mime', regExpForHtmlContent(mailOptions.html))
         .reply(200, {id: 'send-mime-message', message: 'Queued. Thank you.'})
 
       mailgunAdapter({
-        apiKey: process.env.MAILGUN_API_KEY,
-        domain: process.env.MAILGUN_API_DOMAIN,
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
         fromAddress: 'noreply@example.com',
         mime: true
       }).sendMail(mailOptions).then((response) => {
@@ -115,7 +118,7 @@ describe('Mailgun adapter', () => {
 
     it('sends plain text', (done) => {
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
-        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages', encodeQueryParams({
+        .post('/v3/' + mailgunAPIDomain + '/messages', encodeQueryParams({
           from: 'noreply@example.com',
           to: 'my-email',
           subject: 'Password Reset for my-app-name',
@@ -126,8 +129,8 @@ describe('Mailgun adapter', () => {
         .reply(200, {id: 'send-password-reset-text-message', message: 'Queued. Thank you.'})
 
       mailgunAdapter({
-        apiKey: process.env.MAILGUN_API_KEY,
-        domain: process.env.MAILGUN_API_DOMAIN,
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
         fromAddress: 'noreply@example.com',
         sendPasswordResetEmail: sendPasswordResetEmail,
         passwordResetTemplates: passwordResetTemplates
@@ -148,12 +151,12 @@ describe('Mailgun adapter', () => {
         '<a href="my-link">my-link</a></p>\n' +
         '</body></html>'
       nock('https://api.mailgun.net:443', {encodedQueryParams: true})
-        .post('/v3/' + process.env.MAILGUN_API_DOMAIN + '/messages.mime', regExpForHtmlContent(html))
+        .post('/v3/' + mailgunAPIDomain + '/messages.mime', regExpForHtmlContent(html))
         .reply(200, {id: 'send-password-reset-mime-message', message: 'Queued. Thank you.'})
 
       mailgunAdapter({
-        apiKey: process.env.MAILGUN_API_KEY,
-        domain: process.env.MAILGUN_API_DOMAIN,
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
         fromAddress: 'noreply@example.com',
         sendPasswordResetEmail: sendPasswordResetEmail,
         passwordResetTemplates: passwordResetTemplates,
