@@ -86,8 +86,11 @@ var SimpleMailgunAdapter = mailgunOptions => {
   }
 
   if (mailgunOptions.sendVerificationEmail) {
-    // TODO: Add templates for sendVerificationEmail
+    if (!mailgunOptions.verificationTemplates || !mailgunOptions.verificationTemplates.text || !mailgunOptions.verificationTemplates.html) {
+      throw new Error('SimpleMailgunAdapter requires verificationTemplates for text and html if you supply sendVerificationEmail')
+    }
     exports.sendVerificationEmail = mailgunOptions.sendVerificationEmail
+    exports.verificationTemplates = mailgunOptions.verificationTemplates
   }
 
   if (mailgunOptions.sendPasswordResetEmail) {

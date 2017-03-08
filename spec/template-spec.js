@@ -170,4 +170,103 @@ describe('Mailgun adapter', () => {
       })
     })
   })
+
+  describe('when sending verification email', () => {
+    var sendVerificationEmail
+    var verificationOptions
+    var verificationTemplates
+
+    beforeEach(() => {
+      verificationTemplates = {
+        text: ejs.compile('Hi,\n\n' +
+          'You signed up for <%= appName %> with this email address: <%= user.get("email") %>.\n\n' +
+          'Click here to verify your address:\n<%= link %>'),
+        html: ejs.compile('<html><head></head><body>\n' +
+          '<p>Hi,</p>\n' +
+          '<p>You signed up for <%= appName %> with this email address: <%= user.get("email") %>.</p>\n' +
+          '<p>Click here to verify your address:\n' +
+          '<a href="<%= link %>"><%= link %></a></p>\n' +
+          '</body></html>')
+      }
+
+      verificationOptions = {
+        link: 'my-link',
+        user: {
+          email: 'my-email',
+          get: function (key) { return this[key] }
+        },
+        appName: 'my-app-name'
+      }
+
+      sendVerificationEmail = function (options) {
+        var templates = this.verificationTemplates
+        var data = {
+          from: this.fromAddress,
+          to: options.user.get('email'),
+          subject: 'Welcome to ' + options.appName,
+          text: templates.text(options)
+        }
+
+        if (this.mime) {
+          data.html = templates.html(options)
+        }
+
+        return this.sendMail(data)
+      }
+    })
+
+    it('sends plain text', (done) => {
+      nock('https://api.mailgun.net:443', {encodedQueryParams: true})
+        .post('/v3/' + mailgunAPIDomain + '/messages', encodeQueryParams({
+          from: 'noreply@example.com',
+          to: 'my-email',
+          subject: 'Welcome to my-app-name',
+          text: 'Hi,\n\n' +
+            'You signed up for my-app-name with this email address: my-email.\n\n' +
+            'Click here to verify your address:\nmy-link'
+        }))
+        .reply(200, {id: 'send-verification-text-message', message: 'Queued. Thank you.'})
+
+      mailgunAdapter({
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
+        fromAddress: 'noreply@example.com',
+        sendVerificationEmail: sendVerificationEmail,
+        verificationTemplates: verificationTemplates
+      }).sendVerificationEmail(verificationOptions).then(response => {
+        expect(response.id).toEqual('send-verification-text-message')
+        done()
+      }).catch(error => {
+        fail(error)
+        done()
+      })
+    })
+
+    it('sends MIME', (done) => {
+      var html = '<html><head></head><body>\n' +
+        '<p>Hi,</p>\n' +
+        '<p>You signed up for my-app-name with this email address: my-email.</p>\n' +
+        '<p>Click here to verify your address:\n' +
+        '<a href="my-link">my-link</a></p>\n' +
+        '</body></html>'
+      nock('https://api.mailgun.net:443', {encodedQueryParams: true})
+        .post('/v3/' + mailgunAPIDomain + '/messages.mime', regExpForHtmlContent(html))
+        .reply(200, {id: 'send-verification-mime-message', message: 'Queued. Thank you.'})
+
+      mailgunAdapter({
+        apiKey: mailgunAPIKey,
+        domain: mailgunAPIDomain,
+        fromAddress: 'noreply@example.com',
+        sendVerificationEmail: sendVerificationEmail,
+        verificationTemplates: verificationTemplates,
+        mime: true
+      }).sendVerificationEmail(verificationOptions).then(response => {
+        expect(response.id).toEqual('send-verification-mime-message')
+        done()
+      }).catch(error => {
+        fail(error)
+        done()
+      })
+    })
+  })
 })
